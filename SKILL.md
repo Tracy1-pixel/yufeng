@@ -9,7 +9,7 @@ description: 生成 WorkBuddy Token 消耗看板（单文件离线 HTML，含 KP
 
 ## 实时统计
 
-用户需要实时用量时运行 `python <skill目录>/scripts/serve_dashboard.py --projects <真实日志目录>`，按终端地址打开本机看板。每 2 秒检查日志，只统计已记录的真实 usage；缺失数据保持空状态。此适配器仅支持 WorkBuddy，不代表 Codex 或其他 API 调用已接入。不要以 demo.html 代替真实统计。
+先依据用户目标选择数据源：Codex 开发会话用 `python <skill目录>/scripts/serve_dashboard.py --source codex`（默认），API 调用用 `--source api --projects <usage日志目录>`，WorkBuddy 用 `--source workbuddy`。可以用 `--project-root <项目路径>` 限定 Codex 项目。按终端提示在运行机器打开看板；每 2 秒检查真实日志。API 应用须通过 scripts/record_usage.py 的 record_usage 记录实际 SDK 响应。不要自行编造 usage，不要以 demo.html 代替真实统计。Codex 云任务未公开会话日志时保持暂无数据，不能声称已接通。
 
 ## 执行步骤
 

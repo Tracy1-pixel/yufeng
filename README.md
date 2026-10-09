@@ -4,17 +4,58 @@
 
 ## 实时统计真实用量（默认入口）
 
+Python 3.8+，无需安装包。按终端提示在运行机器上打开看板；每 2 秒检查日志，发生变化后刷新。
+
+### Codex 开发会话
+
 ```bash
-python scripts/serve_dashboard.py
-# 或指定真实日志目录
-python scripts/serve_dashboard.py --projects /你的/WorkBuddy/projects --port 8765
+python scripts/serve_dashboard.py --source codex
+# 只统计开发某个项目的会话
+python scripts/serve_dashboard.py --source codex --project-root /你的/项目路径
+# 自定义 Codex 日志目录（例如设置过 CODEX_HOME）
+python scripts/serve_dashboard.py --source codex --projects /你的/codex/sessions
 ```
 
-启动后按终端提示打开本机地址。页面每 2 秒检查日志，变化后重新生成看板；数据仅取自 `providerData.rawUsage / usage`，不会按字符估算、自动产生模拟记录或调用模型。没有日志或真实 usage 时显示“暂无数据”。统计覆盖选定目录中的已有日志，日期按钮再筛选显示范围。日志写入前无法看到尚未返回的 usage；它不是逐字输出时的 Token 计数器。
+默认读取 `~/.codex/sessions/**/*.jsonl` 中 `event_msg → token_count → info.total_token_usage`，累计快照转换为增量，重复快照去重。模型来自 `turn_context`，项目路径来自 `session_meta.cwd`。统计从日志记录的开始到最新已落盘用量，日期按钮可以筛选时间范围，支持项目/会话下钻。
 
-此版本支持 **WorkBuddy 日志**，没有接入 Codex 会话或你的 API 服务。需在使用 WorkBuddy 的机器运行，GitHub 上的文件无法直接访问你的本机日志。金额仍是参考价格估算，Token 数取自日志中的真实 usage。
+**Codex 累计用量增量不是精确的 API 请求数**，界面使用“用量记录”。推理 Token 已包含在输出中，不再次相加；缓存输入已包含在输入中，不再次相加。日志缺失、不包含 usage 或平台不开放日志时显示“暂无数据”，无法凭聊天文本补出实际消耗。此适配器针对 Codex CLI 的 JSONL 格式；网页版/云任务没有本地会话日志时不会自动接通，也不能读取平台未公开的计费记录。不要把演示数据当作真实会话用量。
 
-服务只绑定本机回环地址；退出终端用 Ctrl+C。真实看板写入临时目录，退出后清理，不会提交到 GitHub。
+### 自己应用里的模型 API
+
+在应用里，每次响应完成后把服务商提供的真实 `usage` 交给记录器：
+
+```python
+from scripts.record_usage import record_usage
+
+# response 是你已有的 SDK 实际响应，不要自行构造 token 数。
+record_usage(
+    response,
+    log_path="/你的/私有日志目录/api.jsonl",
+    project="我的应用",
+    session_id="本次开发会话ID",
+    provider="openai",  # Anthropic 可用 anthropic
+)
+```
+
+然后运行：
+
+```bash
+python scripts/serve_dashboard.py --source api --projects /你的/私有日志目录
+```
+
+记录器支持 OpenAI Responses / Chat Completions 和 Anthropic 的 usage 格式、SDK `model_dump()` 对象与字典。缺失 usage 会明确报错，不按字符估算。不记录提示词、回答正文或 API 密钥；按服务商及响应 ID 去重。没有响应 ID 时生成本地记录 ID，因此这类响应请只记录一次。多进程应用建议每个进程用独立 JSONL 文件，放在同一目录供看板扫描。
+
+流式响应只在取得最终 usage 后记录一次：OpenAI Chat Completions 需配置 `stream_options={"include_usage": True}`，Responses 读取完成事件里的响应。没有最终 usage 的片段不能作为真实统计。应用的 SDK 调用和认证沿用你现有实现；看板不会主动调用模型。
+
+### WorkBuddy（参考项目原有数据源）
+
+```bash
+python scripts/serve_dashboard.py --source workbuddy
+```
+
+默认扫描 `~/.workbuddy/projects`，可用 `--projects` 指定目录。
+
+三种来源独立选择，不会把 Codex 的一次调用和你应用的同一次调用混加。真实数据不上传；服务只监听本机回环地址，Ctrl+C 退出，临时 HTML 自动清理。没有日志时显示“暂无数据”和 0 Token。Token 数来自日志/响应，金额是参考价估算；未配置匹配模型价格时显示“未配置价格”，不代表实际账单。
 
 ## 演示体验（非真实统计）
 
@@ -64,6 +105,7 @@ python -m unittest discover -s tests -v
 python -m pip install playwright
 python scripts/make_demo.py
 python tests/browser_smoke.py
+python tests/browser_live.py
 ```
 
 浏览器测试默认使用 `/usr/bin/chromium`，验证 KPI、各图表、主题记忆、日期、搜索、模型高亮、下钻和移动端宽度。可根据系统调整测试中的浏览器路径。真实数据生成器不依赖这些测试工具。

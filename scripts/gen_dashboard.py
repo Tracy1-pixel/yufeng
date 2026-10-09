@@ -35,6 +35,13 @@ def parse_ts(v):
         if v > 1e9: return float(v)
     if isinstance(v, str):
         s = v.strip()
+        try:
+            parsed = datetime.datetime.fromisoformat(s.replace('Z', '+00:00'))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=datetime.timezone.utc)
+            return parsed.timestamp()
+        except ValueError:
+            pass
         for fmt_ in ('%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%SZ',
                      '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f'):
             try:

@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 import tempfile
 import threading
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from http.server import ThreadingHTTPServer
 import unittest
 from urllib.request import urlopen
