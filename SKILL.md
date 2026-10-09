@@ -7,6 +7,10 @@ description: 生成 WorkBuddy Token 消耗看板（单文件离线 HTML，含 KP
 
 为本机 WorkBuddy 生成一张请求级真实 usage 的 Token 消耗看板（单文件自包含 HTML，离线可看，无外部依赖）。
 
+## 实时统计
+
+用户需要实时用量时运行 `python <skill目录>/scripts/serve_dashboard.py --projects <真实日志目录>`，按终端地址打开本机看板。每 2 秒检查日志，只统计已记录的真实 usage；缺失数据保持空状态。此适配器仅支持 WorkBuddy，不代表 Codex 或其他 API 调用已接入。不要以 demo.html 代替真实统计。
+
 ## 执行步骤
 
 1. **确认数据目录**：默认 `~/.workbuddy/projects`（Windows / macOS / Linux 通用）。若用户想看其他目录的日志，用 `--projects` 参数传入。

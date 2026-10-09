@@ -26,4 +26,5 @@ with tempfile.TemporaryDirectory() as directory:
     subprocess.run([sys.executable, str(ROOT / 'scripts/gen_dashboard.py'), '--projects', directory, '--out', str(ROOT / 'demo.html')], check=True)
     target = ROOT / 'demo.html'
     text = target.read_text(encoding='utf-8').replace('请求级真实 usage', '合成演示数据 · 非真实使用记录')
+    text = text.replace('<body>', '<body><div style="padding:16px;margin-bottom:16px;background:#fff3cd;color:#664d03;border:2px solid #ffca2c;border-radius:10px;font-size:16px;font-weight:700">演示模式：以下所有用量及金额均为模拟数据，不是你的实际消耗。真实统计请运行 scripts/serve_dashboard.py。</div>')
     target.write_text(text, encoding='utf-8')

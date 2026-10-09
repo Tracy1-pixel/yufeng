@@ -2,7 +2,21 @@
 
 参考 [fuyi-git/token-dashboard](https://github.com/fuyi-git/token-dashboard) 的同款 WorkBuddy 用量看板。Python 3.8+，生成器只使用标准库，无需安装依赖；输出单文件 HTML，可离线打开。
 
-## 立即体验
+## 实时统计真实用量（默认入口）
+
+```bash
+python scripts/serve_dashboard.py
+# 或指定真实日志目录
+python scripts/serve_dashboard.py --projects /你的/WorkBuddy/projects --port 8765
+```
+
+启动后按终端提示打开本机地址。页面每 2 秒检查日志，变化后重新生成看板；数据仅取自 `providerData.rawUsage / usage`，不会按字符估算、自动产生模拟记录或调用模型。没有日志或真实 usage 时显示“暂无数据”。统计覆盖选定目录中的已有日志，日期按钮再筛选显示范围。日志写入前无法看到尚未返回的 usage；它不是逐字输出时的 Token 计数器。
+
+此版本支持 **WorkBuddy 日志**，没有接入 Codex 会话或你的 API 服务。需在使用 WorkBuddy 的机器运行，GitHub 上的文件无法直接访问你的本机日志。金额仍是参考价格估算，Token 数取自日志中的真实 usage。
+
+服务只绑定本机回环地址；退出终端用 Ctrl+C。真实看板写入临时目录，退出后清理，不会提交到 GitHub。
+
+## 演示体验（非真实统计）
 
 下载仓库后直接用浏览器打开 `demo.html`。演示文件只包含合成数据，不代表真实使用记录。
 
