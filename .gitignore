@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.workbuddy/
+token-dashboard.html
+playwright-report/
